@@ -10,6 +10,21 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+## compare the modified date of two files
+is_file_modified() {
+    [ $# -lt 2 ] && return 0
+
+    MOD1=$(stat "${1}" | grep ^Modify:)
+    MOD2=$(stat "${2}" | grep ^Modify:)
+
+    if [[ "$MOD1" > "$MOD2" ]]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+## minify all modified files under $BASEDIR
 BASEDIR=$(cd $(dirname $1) && echo $PWD)
 find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
 
@@ -21,12 +36,18 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
         css|js)
             DEST="${NAME}.min.${TYPE}"
 
+            is_file_modified "$FILE" "$DEST"
+            [ "$?" = "1" ] || continue
+
             echo "Compressing: ${DEST}"
             java -jar "${YUICOMPRESS}" "${FILE}" > "${DEST}"
         ;;
 
         xml)
             DEST="${FILE}.gz"
+
+            is_file_modified "$FILE" "$DEST"
+            [ "$?" = "1" ] || continue
 
             echo "Compressing: ${DEST}"
             gzip -c "${FILE}" > "${DEST}"
