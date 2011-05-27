@@ -14,6 +14,10 @@ fi
 is_file_modified() {
     [ $# -lt 2 ] && return 0
 
+    ## check if both files already exist
+    [ -f "${1}" ] || return 0
+    [ -f "${2}" ] || return 1
+
     MOD1=$(stat "${1}" | grep ^Modify:)
     MOD2=$(stat "${2}" | grep ^Modify:)
 
