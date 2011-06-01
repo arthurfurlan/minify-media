@@ -18,10 +18,10 @@ is_file_modified() {
     [ -f "${1}" ] || return 0
     [ -f "${2}" ] || return 1
 
-    MOD1=$(stat "${1}" | grep ^Modify:)
-    MOD2=$(stat "${2}" | grep ^Modify:)
+    MOD1=$(stat "${1}" | grep ^Modify: | cut -c 9-27)
+    MOD2=$(stat "${2}" | grep ^Modify: | cut -c 9-27)
 
-    if [[ "$MOD1" > "$MOD2" ]]; then
+    if [ "$MOD1" \> "$MOD2" ]; then
         return 1
     else
         return 0
