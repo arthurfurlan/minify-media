@@ -48,13 +48,36 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
         ;;
 
         png)
-            DEST="${NAME}-nq8.${TYPE}"
+            DEST="${NAME}.min.${TYPE}"
+            TEMP="${NAME}-nq8.${TYPE}"
 
             is_file_modified "$FILE" "$DEST"
             [ "$?" = "1" ] || continue
 
             echo "Compressing: ${DEST}"
             pngnq "${FILE}"
+            mv "${TEMP}" "${DEST}"
+        ;;
+
+        jpg|jpeg)
+            DEST="${NAME}.min.${TYPE}"
+
+            is_file_modified "$FILE" "$DEST"
+            [ "$?" = "1" ] || continue
+
+            echo "Compressing: ${DEST}"
+            cp "${FILE}" "${DEST}"
+            jpegoptim "${DEST}"
+        ;;
+
+        gif)
+            DEST="${NAME}.min.${TYPE}"
+
+            is_file_modified "$FILE" "$DEST"
+            [ "$?" = "1" ] || continue
+
+            echo "Compressing: ${DEST}"
+            gifsicle --optimize -i "${FILE}" -o "${DEST}"
         ;;
 
         xml)
