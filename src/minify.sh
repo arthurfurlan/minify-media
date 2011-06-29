@@ -29,7 +29,7 @@ is_file_modified() {
 }
 
 ## minify all modified files under $BASEDIR
-BASEDIR=$(cd $(dirname $1) && echo $PWD)
+BASEDIR=$1
 find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
 
     TYPE=$(echo $FILE | rev | cut -d '.' -f 1 | rev)
