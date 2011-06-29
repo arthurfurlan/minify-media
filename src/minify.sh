@@ -47,6 +47,16 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
             java -jar "${YUICOMPRESS}" "${FILE}" > "${DEST}"
         ;;
 
+        png)
+            DEST="${NAME}-nq8.${TYPE}"
+
+            is_file_modified "$FILE" "$DEST"
+            [ "$?" = "1" ] || continue
+
+            echo "Compressing: ${DEST}"
+            pngnq "${FILE}"
+        ;;
+
         xml)
             DEST="${FILE}.gz"
 
