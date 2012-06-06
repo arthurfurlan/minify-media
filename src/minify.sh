@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # written by Osvaldo Santana <osantana@triveos.com>
-#         by Arthur Furlan <afurlan@valvim.com>
+#         by Arthur Furlan <afurlan@mecasar.com>
 
 YUICOMPRESS="yuicompressor-2.4.6.jar"
 
@@ -18,6 +18,7 @@ is_file_modified() {
     [ -f "${1}" ] || return 0
     [ -f "${2}" ] || return 1
 
+    ## get the modified date of both files
     MOD1=$(stat "${1}" | grep ^Modify: | cut -c 9-27)
     MOD2=$(stat "${2}" | grep ^Modify: | cut -c 9-27)
 
@@ -25,6 +26,21 @@ is_file_modified() {
         return 1
     else
         return 0
+    fi
+}
+
+## check if the minified file really is smaller
+is_file_minified() {
+    [ $# -lt 2 ] && return 0
+
+    ## get the file size of both files
+    SIZ1=$(du -b "${1}")
+    SIZ2=$(du -b "${2}")
+
+    if [ "$SIZ1" \> "$SIZ2" ]; then
+        return 0
+    else
+        return 1
     fi
 }
 
@@ -40,54 +56,84 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
         css|js)
             DEST="${NAME}.min.${TYPE}"
 
+            ## check if the file needs to be minified
             is_file_modified "$FILE" "$DEST"
             [ "$?" = "1" ] || continue
 
+            ## create the new (and minified) version
             echo "Compressing: ${DEST}"
             java -jar "${YUICOMPRESS}" "${FILE}" > "${DEST}"
+
+            ## check if the minified file really is smaller
+            is_file_minified "$FILE" "$DEST"
+            [ "$?" = "0" ] || cp "$FILE" "$DEST"
         ;;
 
         png)
             DEST="${NAME}.min.${TYPE}"
             TEMP="${NAME}-nq8.${TYPE}"
 
+            ## check if the file needs to be minified
             is_file_modified "$FILE" "$DEST"
             [ "$?" = "1" ] || continue
 
+            ## create the new (and minified) version
             echo "Compressing: ${DEST}"
             pngnq "${FILE}"
             mv "${TEMP}" "${DEST}"
+
+            ## check if the minified file really is smaller
+            is_file_minified "$FILE" "$DEST"
+            [ "$?" = "0" ] || cp "$FILE" "$DEST"
         ;;
 
         jpg|jpeg)
             DEST="${NAME}.min.${TYPE}"
 
+            ## check if the file needs to be minified
             is_file_modified "$FILE" "$DEST"
             [ "$?" = "1" ] || continue
 
+            ## create the new (and minified) version
             echo "Compressing: ${DEST}"
             cp "${FILE}" "${DEST}"
             jpegoptim "${DEST}"
+
+            ## check if the minified file really is smaller
+            is_file_minified "$FILE" "$DEST"
+            [ "$?" = "0" ] || cp "$FILE" "$DEST"
         ;;
 
         gif)
             DEST="${NAME}.min.${TYPE}"
 
+            ## check if the file needs to be minified
             is_file_modified "$FILE" "$DEST"
             [ "$?" = "1" ] || continue
 
+            ## create the new (and minified) version
             echo "Compressing: ${DEST}"
             gifsicle --optimize -i "${FILE}" -o "${DEST}"
+
+            ## check if the minified file really is smaller
+            is_file_minified "$FILE" "$DEST"
+            [ "$?" = "0" ] || cp "$FILE" "$DEST"
         ;;
 
         xml)
             DEST="${FILE}.gz"
 
+            ## check if the file needs to be minified
             is_file_modified "$FILE" "$DEST"
             [ "$?" = "1" ] || continue
 
+            ## create the new (and minified) version
             echo "Compressing: ${DEST}"
             gzip -c "${FILE}" > "${DEST}"
+
+            ## gziped files cannot use the same rule of copying
+            ## the original file over the destination file if
+            ## the minified version was bigger than the original
         ;;
 
     esac
