@@ -1,9 +1,10 @@
 #!/bin/bash
 #
+# written by Arthur Furlan <afurlan@mecasar.com>
 # written by Osvaldo Santana <osantana@triveos.com>
-#         by Arthur Furlan <afurlan@mecasar.com>
 
-YUICOMPRESS="yuicompressor-2.4.6.jar"
+YUICOMPRESSOR="yuicompressor.jar"
+GOOGLECLOSURE="googleclosure.jar"
 
 if [ $# -lt 1 ]; then
     echo "Usage: $0 BASEDIR"
@@ -53,7 +54,7 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
 
     case "$TYPE" in
 
-        css|js)
+        js)
             DEST="${NAME}.min.${TYPE}"
 
             ## check if the file needs to be minified
@@ -62,7 +63,23 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
 
             ## create the new (and minified) version
             echo "Compressing: ${DEST}"
-            java -jar "${YUICOMPRESS}" "${FILE}" > "${DEST}"
+            java -jar "${GOOGLECLOSURE}" --js "${FILE}" --compilation_level SIMPLE_OPTIMIZATIONS > "${DEST}"
+
+            ## check if the minified file really is smaller
+            is_file_minified "$FILE" "$DEST"
+            [ "$?" = "0" ] || cp "$FILE" "$DEST"
+        ;;
+
+       css)
+            DEST="${NAME}.min.${TYPE}"
+
+            ## check if the file needs to be minified
+            is_file_modified "$FILE" "$DEST"
+            [ "$?" = "1" ] || continue
+
+            ## create the new (and minified) version
+            echo "Compressing: ${DEST}"
+            java -jar "${YUICOMPRESSOR}" "${FILE}" > "${DEST}"
 
             ## check if the minified file really is smaller
             is_file_minified "$FILE" "$DEST"
