@@ -5,6 +5,7 @@
 
 YUICOMPRESSOR="yuicompressor.jar"
 GOOGLECLOSURE="googleclosure.jar"
+GZIP="1"
 
 if [ $# -lt 1 ]; then
     echo "Usage: $0 BASEDIR"
@@ -45,6 +46,20 @@ is_file_minified() {
     fi
 }
 
+## check if the file should be statically gziped
+gzip_compressor() {
+    [ $# -lt 1 ] && return 0
+
+    FILE="$1"
+    DEST="${FILE}.gz"
+
+    ## check if this feature is enabled
+    if [ "$GZIP" = "1" ]; then
+        gzip -c "${FILE}" > "${DEST}"
+        touch "${DEST}" -r "${FILE}"
+    fi
+}
+
 ## minify all modified files under $BASEDIR
 BASEDIR=$1
 find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
@@ -68,6 +83,9 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
             ## check if the minified file really is smaller
             is_file_minified "$FILE" "$DEST"
             [ "$?" = "0" ] || cp "$FILE" "$DEST"
+
+            ## check if the file should be also compressed using gzip
+            gzip_compressor "$DEST"
         ;;
 
        css)
@@ -84,6 +102,9 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
             ## check if the minified file really is smaller
             is_file_minified "$FILE" "$DEST"
             [ "$?" = "0" ] || cp "$FILE" "$DEST"
+
+            ## check if the file should be also compressed using gzip
+            gzip_compressor "$DEST"
         ;;
 
         less)
@@ -95,13 +116,16 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
 
             ## create the new (and minified) version
             echo "Compressing: ${DEST}"
-            lessc "${FILE}" --yui-compress > "${TEMP}"
+            lessc "${FILE}" --yui-compress > "${DEST}"
 
             ## less files cannot use the same rule of copying
             ## the original file over the destination file if
             ## the minified version was bigger than the original
             ## because the less syntax could not be a valid css
             ## syntax
+
+            ## check if the file should be also compressed using gzip
+            gzip_compressor "$DEST"
         ;;
 
         png)
@@ -120,6 +144,9 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
             ## check if the minified file really is smaller
             is_file_minified "$FILE" "$DEST"
             [ "$?" = "0" ] || cp "$FILE" "$DEST"
+
+            ## check if the file should be also compressed using gzip
+            gzip_compressor "$DEST"
         ;;
 
         jpg|jpeg)
@@ -137,6 +164,9 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
             ## check if the minified file really is smaller
             is_file_minified "$FILE" "$DEST"
             [ "$?" = "0" ] || cp "$FILE" "$DEST"
+
+            ## check if the file should be also compressed using gzip
+            gzip_compressor "$DEST"
         ;;
 
         gif)
@@ -153,6 +183,9 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
             ## check if the minified file really is smaller
             is_file_minified "$FILE" "$DEST"
             [ "$?" = "0" ] || cp "$FILE" "$DEST"
+
+            ## check if the file should be also compressed using gzip
+            gzip_compressor "$DEST"
         ;;
 
         xml)
