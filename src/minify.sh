@@ -128,6 +128,27 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
             gzip_compressor "$DEST"
         ;;
 
+        sass|scss)
+            DEST="${NAME}.min.css"
+
+            ## check if the file needs to be minified
+            is_file_modified "$FILE" "$DEST"
+            [ "$?" = "1" ] || continue
+
+            ## create the new (and minified) version
+            echo "Compressing: ${DEST}"
+            sass --watch "${FILE}:${DEST}"
+
+            ## sass files cannot use the same rule of copying
+            ## the original file over the destination file if
+            ## the minified version was bigger than the original
+            ## because the sass syntax could not be a valid css
+            ## syntax
+
+            ## check if the file should be also compressed using gzip
+            gzip_compressor "$DEST"
+        ;;
+
         png)
             DEST="${NAME}.min.${TYPE}"
             TEMP="${NAME}-nq8.${TYPE}"
