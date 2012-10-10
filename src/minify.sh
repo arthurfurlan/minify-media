@@ -86,6 +86,24 @@ find "$BASEDIR" -type f | egrep -v '\.min\.' | while read FILE; do
             [ "$?" = "0" ] || cp "$FILE" "$DEST"
         ;;
 
+        less)
+            DEST="${NAME}.min.css"
+
+            ## check if the file needs to be minified
+            is_file_modified "$FILE" "$DEST"
+            [ "$?" = "1" ] || continue
+
+            ## create the new (and minified) version
+            echo "Compressing: ${DEST}"
+            lessc "${FILE}" --yui-compress > "${TEMP}"
+
+            ## less files cannot use the same rule of copying
+            ## the original file over the destination file if
+            ## the minified version was bigger than the original
+            ## because the less syntax could not be a valid css
+            ## syntax
+        ;;
+
         png)
             DEST="${NAME}.min.${TYPE}"
             TEMP="${NAME}-nq8.${TYPE}"
