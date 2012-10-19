@@ -21,8 +21,8 @@ is_file_modified() {
     [ -f "${2}" ] || return 1
 
     ## get the modified date of both files
-    MOD1=$(stat "${1}" | grep ^Modify: | cut -c 9-27)
-    MOD2=$(stat "${2}" | grep ^Modify: | cut -c 9-27)
+    MOD1=$(stat -t "${1}" | cut -d ' ' -f 13)
+    MOD2=$(stat -t "${2}" | cut -d ' ' -f 13)
 
     if [ "$MOD1" \> "$MOD2" ]; then
         return 1
